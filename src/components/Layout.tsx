@@ -19,7 +19,7 @@ export default function Layout() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white transition-transform group-hover:scale-110">
               <Cpu size={18} />
             </div>
-            <span className="text-lg font-semibold tracking-tight">AI Practitioner</span>
+            <span className="text-lg font-semibold tracking-tight">Vector Slivert</span>
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -48,7 +48,7 @@ export default function Layout() {
       <footer className="mt-auto border-t border-black/5 bg-white py-8">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} AI Practitioner Portfolio. Built with precision.
+            © {new Date().getFullYear()} Vector Slivert Portfolio. Built with precision.
           </p>
         </div>
       </footer>
