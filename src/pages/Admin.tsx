@@ -153,8 +153,8 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-black/5 bg-white overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+      <div className="overflow-x-auto rounded-3xl border border-black/5 bg-white shadow-sm">
+        <table className="w-full min-w-[600px] text-left">
           <thead>
             <tr className="border-b border-black/5 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
               <th className="px-6 py-4">Content</th>
@@ -164,33 +164,41 @@ export default function Admin() {
             </tr>
           </thead>
           <tbody className="divide-y divide-black/5">
-            {posts.map((post) => (
-              <tr key={post.id} className="group hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="font-semibold">{post.title}</div>
-                  <div className="text-xs text-gray-400 truncate max-w-xs">{post.content}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
-                    {post.type === 'article' && <FileText size={14} />}
-                    {post.type === 'image' && <ImageIcon size={14} />}
-                    {post.type === 'video' && <Video size={14} />}
-                    <span className="capitalize">{post.type}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-xs text-gray-500">
-                  {format(new Date(post.created_at), 'MMM d, yyyy')}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+            {posts.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
+                  No posts found. Create your first one!
                 </td>
               </tr>
-            ))}
+            ) : (
+              posts.map((post) => (
+                <tr key={post.id} className="group hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold">{post.title}</div>
+                    <div className="text-xs text-gray-400 truncate max-w-xs">{post.content}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      {post.type === 'article' && <FileText size={14} />}
+                      {post.type === 'image' && <ImageIcon size={14} />}
+                      {post.type === 'video' && <Video size={14} />}
+                      <span className="capitalize">{post.type}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-500">
+                    {format(new Date(post.created_at), 'MMM d, yyyy')}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -202,7 +210,7 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Create New Post</h2>
@@ -257,6 +265,7 @@ export default function Admin() {
                     {newPost.type === 'article' ? 'Content (Markdown)' : 'Caption / Description'}
                   </label>
                   <textarea
+                    required
                     rows={6}
                     className="w-full rounded-xl border border-black/10 bg-gray-50 px-4 py-3 outline-none focus:border-emerald-600"
                     value={newPost.content}
