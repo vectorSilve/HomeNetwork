@@ -14,6 +14,7 @@ interface Post {
 
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -32,27 +33,31 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem("admin_password");
-    if (saved) {
-      checkLogin(saved);
+    const savedPass = localStorage.getItem("admin_password");
+    const savedUser = localStorage.getItem("admin_username");
+    if (savedPass) {
+      checkLogin(savedUser || "admin", savedPass);
     }
   }, []);
 
-  const checkLogin = async (pass: string) => {
+  const checkLogin = async (user: string, pass: string) => {
     try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pass }),
+        body: JSON.stringify({ username: user, password: pass }),
       });
       if (res.ok) {
         setIsLoggedIn(true);
+        setUsername(user);
         setPassword(pass);
+        localStorage.setItem("admin_username", user);
         localStorage.setItem("admin_password", pass);
         fetchPosts();
       } else {
-        setError("Invalid password");
+        setError("Invalid credentials");
         localStorage.removeItem("admin_password");
+        localStorage.removeItem("admin_username");
       }
     } catch (e) {
       setError("Server error");
@@ -106,10 +111,17 @@ export default function Admin() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              checkLogin(password);
+              checkLogin(username, password);
             }}
             className="space-y-4"
           >
+            <input
+              type="text"
+              placeholder="Username"
+              className="w-full rounded-xl border border-black/10 bg-gray-50 px-4 py-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
             <input
               type="password"
               placeholder="Password"
@@ -145,6 +157,7 @@ export default function Admin() {
             onClick={() => {
               setIsLoggedIn(false);
               localStorage.removeItem("admin_password");
+              localStorage.removeItem("admin_username");
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white text-gray-400 hover:text-red-600"
           >

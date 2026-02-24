@@ -20,10 +20,23 @@ db.exec(`
     url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+  );
 `);
 
 // Seed data if empty
 const count = db.prepare("SELECT COUNT(*) as count FROM posts").get() as { count: number };
+const adminCount = db.prepare("SELECT COUNT(*) as count FROM admins").get() as { count: number };
+
+if (adminCount.count === 0) {
+  const adminPass = process.env.ADMIN_PASSWORD || "19970830";
+  db.prepare("INSERT INTO admins (username, password) VALUES (?, ?)").run("admin", adminPass);
+}
+
 if (count.count <= 3) {
   const insert = db.prepare("INSERT INTO posts (title, content, type, url) VALUES (?, ?, ?, ?)");
   const aiContent = [
@@ -96,11 +109,13 @@ app.delete("/api/posts/:id", (req, res) => {
 });
 
 app.post("/api/login", (req, res) => {
-  const { password } = req.body;
-  if (password === process.env.ADMIN_PASSWORD) {
+  const { username, password } = req.body;
+  const admin = db.prepare("SELECT * FROM admins WHERE username = ? AND password = ?").get(username || "admin", password);
+  
+  if (admin) {
     res.json({ success: true });
   } else {
-    res.status(401).json({ error: "Invalid password" });
+    res.status(401).json({ error: "Invalid credentials" });
   }
 });
 
