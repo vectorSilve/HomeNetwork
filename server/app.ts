@@ -37,7 +37,7 @@ if (adminCount.count === 0) {
   db.prepare("INSERT INTO admins (username, password) VALUES (?, ?)").run("admin", adminPass);
 }
 
-if (count.count <= 3) {
+if (count.count === 0) { // Only seed if completely empty on Vercel
   const insert = db.prepare("INSERT INTO posts (title, content, type, url) VALUES (?, ?, ?, ?)");
   const aiContent = [
     {
