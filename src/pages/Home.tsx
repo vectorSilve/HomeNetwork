@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import Markdown from "react-markdown";
 import { format } from "date-fns";
-import { FileText, Image as ImageIcon, Video, ExternalLink, Github, Twitter, Linkedin } from "lucide-react";
+import { FileText, Image as ImageIcon, Video, ExternalLink } from "lucide-react";
 
 interface Post {
   id: number;
@@ -37,12 +37,6 @@ export default function Home() {
           <p className="max-w-2xl text-lg text-gray-600 leading-relaxed">
             I'm an AI Engineer and Researcher focused on building scalable machine learning systems and intuitive human-AI interfaces.
           </p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <SocialLink href="#" icon={<Github size={20} />} label="GitHub" />
-          <SocialLink href="#" icon={<Twitter size={20} />} label="Twitter" />
-          <SocialLink href="#" icon={<Linkedin size={20} />} label="LinkedIn" />
         </div>
       </section>
 
@@ -137,14 +131,3 @@ function PostCard({ post }: { post: Post }) {
   );
 }
 
-function SocialLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <a
-      href={href}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white text-gray-600 transition-all hover:border-emerald-600 hover:text-emerald-600 hover:shadow-lg hover:shadow-emerald-600/10"
-      aria-label={label}
-    >
-      {icon}
-    </a>
-  );
-}

@@ -1,0 +1,7 @@
+node_modules
+dist
+blog.db
+.env
+.git
+Dockerfile
+README.md

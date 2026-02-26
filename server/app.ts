@@ -5,9 +5,9 @@ import path from "path";
 
 dotenv.config();
 
-// On Vercel, /tmp is the only writable directory
-const isVercel = process.env.VERCEL === '1';
-const dbPath = isVercel ? '/tmp/blog.db' : 'blog.db';
+// On Serverless platforms (Vercel, Cloud Run), /tmp is usually the only writable directory
+const isServerless = process.env.VERCEL === '1' || process.env.K_SERVICE !== undefined;
+const dbPath = isServerless ? '/tmp/blog.db' : 'blog.db';
 const db = new Database(dbPath);
 
 // Initialize database
