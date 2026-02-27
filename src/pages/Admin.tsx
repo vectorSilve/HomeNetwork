@@ -55,7 +55,8 @@ export default function Admin() {
         localStorage.setItem("admin_password", pass);
         fetchPosts();
       } else {
-        setError("Invalid credentials");
+        const errorData = await res.json().catch(() => ({ error: "Invalid credentials" }));
+        setError(errorData.error || "Invalid credentials");
         localStorage.removeItem("admin_password");
         localStorage.removeItem("admin_username");
       }
@@ -65,9 +66,18 @@ export default function Admin() {
   };
 
   const fetchPosts = async () => {
-    const res = await fetch("/api/posts");
-    const data = await res.json();
-    setPosts(data);
+    try {
+      const res = await fetch("/api/posts");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Failed to fetch posts:", errorData);
+        return;
+      }
+      const data = await res.json();
+      setPosts(data);
+    } catch (e) {
+      console.error("Error fetching posts:", e);
+    }
   };
 
   const handleAddPost = async (e: React.FormEvent) => {
@@ -141,15 +151,15 @@ export default function Admin() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-gray-500">Manage your portfolio and blog posts</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 sm:flex-none"
           >
             <Plus size={18} /> New Post
           </button>
@@ -171,8 +181,8 @@ export default function Admin() {
           <thead>
             <tr className="border-b border-black/5 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
               <th className="px-6 py-4">Content</th>
-              <th className="px-6 py-4">Type</th>
-              <th className="px-6 py-4">Date</th>
+              <th className="hidden px-6 py-4 sm:table-cell">Type</th>
+              <th className="hidden px-6 py-4 md:table-cell">Date</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -188,9 +198,14 @@ export default function Admin() {
                 <tr key={post.id} className="group hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-semibold">{post.title}</div>
-                    <div className="text-xs text-gray-400 truncate max-w-xs">{post.content}</div>
+                    <div className="text-xs text-gray-400 truncate max-w-[200px] sm:max-w-xs">{post.content}</div>
+                    <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-emerald-600 sm:hidden">
+                      <span className="capitalize">{post.type}</span>
+                      <span className="text-gray-300">•</span>
+                      <span>{format(new Date(post.created_at), 'MMM d')}</span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden px-6 py-4 sm:table-cell">
                     <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
                       {post.type === 'article' && <FileText size={14} />}
                       {post.type === 'image' && <ImageIcon size={14} />}
@@ -198,7 +213,7 @@ export default function Admin() {
                       <span className="capitalize">{post.type}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
+                  <td className="hidden px-6 py-4 md:table-cell text-xs text-gray-500">
                     {format(new Date(post.created_at), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 text-right">

@@ -19,9 +19,20 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/posts")
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          console.error("Failed to fetch posts:", errorData);
+          return [];
+        }
+        return res.json();
+      })
       .then((data) => {
         setPosts(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching posts:", err);
         setLoading(false);
       });
   }, []);
@@ -29,12 +40,12 @@ export default function Home() {
   return (
     <div className="space-y-16">
       {/* Hero Section */}
-      <section className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+      <section className="space-y-6 py-4 sm:py-8 lg:py-12">
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl max-w-3xl leading-[1.1]">
             Designing the future of <span className="text-emerald-600">Intelligence</span>.
           </h1>
-          <p className="max-w-2xl text-lg text-gray-600 leading-relaxed">
+          <p className="max-w-2xl text-lg sm:text-xl text-gray-600 leading-relaxed">
             I'm an AI Engineer and Researcher focused on building scalable machine learning systems and intuitive human-AI interfaces.
           </p>
         </div>

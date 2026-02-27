@@ -22,13 +22,14 @@ export default function Layout() {
             <span className="text-lg font-semibold tracking-tight">Vector Sliver</span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1 sm:gap-2">
             <NavLink to="/" active={location.pathname === "/"}>
-              Portfolio
+              <span className="hidden sm:inline">Portfolio</span>
+              <span className="sm:hidden">Home</span>
             </NavLink>
             <NavLink to="/admin" active={location.pathname === "/admin"}>
-              <LayoutDashboard size={16} className="mr-1.5" />
-              Admin
+              <LayoutDashboard size={16} className="sm:mr-1.5" />
+              <span className="hidden sm:inline">Admin</span>
             </NavLink>
           </nav>
         </div>

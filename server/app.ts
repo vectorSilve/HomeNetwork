@@ -8,25 +8,38 @@ dotenv.config();
 // On Serverless platforms (Vercel, Cloud Run), /tmp is usually the only writable directory
 const isServerless = process.env.VERCEL === '1' || process.env.K_SERVICE !== undefined;
 const dbPath = isServerless ? '/tmp/blog.db' : 'blog.db';
-const db = new Database(dbPath);
+let db: Database.Database;
+try {
+  db = new Database(dbPath);
+  // Initialize database
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT,
+      type TEXT NOT NULL,
+      url TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-// Initialize database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    content TEXT,
-    type TEXT NOT NULL,
-    url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
-  );
-`);
+    CREATE TABLE IF NOT EXISTS admins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    );
+  `);
+} catch (error) {
+  console.error("CRITICAL: Failed to initialize database:", error);
+  // Provide a dummy object to prevent immediate crashes, though routes will still fail
+  db = { 
+    prepare: () => ({ 
+      get: () => ({ count: 0 }), 
+      all: () => [], 
+      run: () => ({ lastInsertRowid: 0 }) 
+    }),
+    exec: () => {}
+  } as any;
+}
 
 // Seed data if empty
 const count = db.prepare("SELECT COUNT(*) as count FROM posts").get() as { count: number };
@@ -83,39 +96,63 @@ if (count.count === 0) { // Only seed if completely empty on Vercel
 const app = express();
 app.use(express.json());
 
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", environment: process.env.NODE_ENV, isServerless: process.env.VERCEL === '1' || process.env.K_SERVICE !== undefined });
+});
+
 app.get("/api/posts", (req, res) => {
-  const posts = db.prepare("SELECT * FROM posts ORDER BY created_at DESC").all();
-  res.json(posts);
+  try {
+    const posts = db.prepare("SELECT * FROM posts ORDER BY created_at DESC").all();
+    res.json(posts);
+  } catch (error) {
+    console.error("Database error in GET /api/posts:", error);
+    res.status(500).json({ error: "Internal server error", details: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 app.post("/api/posts", (req, res) => {
-  const { title, content, type, url, password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const { title, content, type, url, password } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const stmt = db.prepare("INSERT INTO posts (title, content, type, url) VALUES (?, ?, ?, ?)");
+    const info = stmt.run(title, content, type, url);
+    res.json({ id: info.lastInsertRowid });
+  } catch (error) {
+    console.error("Database error in POST /api/posts:", error);
+    res.status(500).json({ error: "Internal server error", details: error instanceof Error ? error.message : String(error) });
   }
-  const stmt = db.prepare("INSERT INTO posts (title, content, type, url) VALUES (?, ?, ?, ?)");
-  const info = stmt.run(title, content, type, url);
-  res.json({ id: info.lastInsertRowid });
 });
 
 app.delete("/api/posts/:id", (req, res) => {
-  const { password } = req.body;
-  const { id } = req.params;
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const { password } = req.body;
+    const { id } = req.params;
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    db.prepare("DELETE FROM posts WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Database error in DELETE /api/posts:", error);
+    res.status(500).json({ error: "Internal server error", details: error instanceof Error ? error.message : String(error) });
   }
-  db.prepare("DELETE FROM posts WHERE id = ?").run(id);
-  res.json({ success: true });
 });
 
 app.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
-  const admin = db.prepare("SELECT * FROM admins WHERE username = ? AND password = ?").get(username || "admin", password);
-  
-  if (admin) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: "Invalid credentials" });
+  try {
+    const { username, password } = req.body;
+    const admin = db.prepare("SELECT * FROM admins WHERE username = ? AND password = ?").get(username || "admin", password);
+    
+    if (admin) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ error: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.error("Database error in POST /api/login:", error);
+    res.status(500).json({ error: "Internal server error", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
